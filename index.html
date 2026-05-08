@@ -1,0 +1,464 @@
+[08.05.2026 21:17] Kolya: <!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEON-CHEMISTRY EMPIRE v10.0</title>
+    <style>
+        :root {
+            --tox: #39ff14;
+            --acid: #bc13fe;
+            --deep-bg: #010501;
+            --glass: rgba(57, 255, 20, 0.08);
+            --gold: #ffd700;
+            --danger: #ff073a;
+        }
+
+        * { box-sizing: border-box; }
+        body, html {
+            margin: 0; padding: 0;
+            background: var(--deep-bg);
+            color: #e0ffe0;
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+        }
+
+        canvas#bg {
+            position: fixed; top: 0; left: 0; z-index: -1; opacity: 0.2;
+        }
+
+        /* START SCREEN */
+        #splash {
+            position: fixed; inset: 0; background: black;
+            display: flex; flex-direction: column; justify-content: center;
+            align-items: center; z-index: 5000; transition: 0.8s;
+        }
+        .logo-box {
+            border: 4px solid var(--tox); padding: 40px;
+            text-align: center; box-shadow: 0 0 50px var(--tox);
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+
+        /* NAVIGATION */
+        nav {
+            position: fixed; top: 0; width: 100%; height: 70px;
+            background: rgba(0,0,0,0.9); backdrop-filter: blur(15px);
+            border-bottom: 2px solid var(--tox); display: flex;
+            justify-content: center; align-items: center; z-index: 1000; gap: 10px;
+        }
+        nav button {
+            background: var(--glass); border: 1px solid var(--tox);
+            color: var(--tox); padding: 10px 18px; cursor: pointer;
+            font-weight: bold; border-radius: 5px; transition: 0.3s;
+            text-transform: uppercase; font-size: 0.8rem;
+        }
+        nav button:hover { background: var(--tox); color: black; box-shadow: 0 0 15px var(--tox); }
+        nav button.active-nav { background: var(--acid); border-color: var(--acid); color: white; }
+
+        /* MAIN SECTIONS */
+        section {
+            display: none; padding: 100px 20px 40px;
+            max-width: 1200px; margin: 0 auto;
+            animation: slideUp 0.6s ease-out;
+        }
+        .active-sec { display: block !important; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* LAB LAYOUT */
+        .lab-layout {
+            display: grid; grid-template-columns: 1fr 1.5fr 1fr; gap: 20px;
+        }
+        @media (max-width: 900px) { .lab-layout { grid-template-columns: 1fr; } }
+
+        .flask-unit {
+            background: var(--glass); border: 2px solid var(--tox);
+            border-radius: 20px; padding: 20px; text-align: center;
+            position: relative;
+        }
+        .flask-visual {
+            width: 180px; height: 260px; border: 4px solid #fff;
+            margin: 20px auto; border-radius: 10% 10% 45% 45%;
+            position: relative; overflow: hidden; background: #111;
+        }
+        #liquid-fill {
+            position: absolute; bottom: 0; width: 100%;
+            background: linear-gradient(to top, #bc13fe, #7a00ff);
+            height: 0%; transition: 0.4s;
+        }
+        .main-tap-btn {
+            width: 200px; height: 200px; border-radius: 50%;
+            border: 8px solid var(--tox); background: transparent;
+            color: var(--tox); font-size: 1.5rem; font-weight: bold;
+            cursor: pointer; box-shadow: 0 0 20px var(--tox);
+            transition: 0.1s;
+        }
+        .main-tap-btn:active { transform: scale(0.92); filter: brightness(1.5); }
+        .main-tap-btn:disabled { border-color: var(--danger); color: var(--danger); cursor: not-allowed; box-shadow: none; }
+
+        /* CARDS */
+        .
+[08.05.2026 21:17] Kolya: card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+        .item-card {
+            background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1);
+            padding: 20px; border-radius: 15px; position: relative;
+            transition: 0.3s;
+        }
+        .item-card:hover { border-color: var(--tox); transform: scale(1.02); }
+        .price-tag { color: var(--tox); font-weight: bold; font-family: monospace; }
+        .buy-btn {
+            width: 100%; padding: 12px; margin-top: 15px;
+            background: var(--tox); border: none; font-weight: bold;
+            cursor: pointer; border-radius: 5px;
+        }
+        .buy-btn:disabled { background: #222; color: #555; cursor: not-allowed; }
+
+        /* STATS */
+        .stats-bar {
+            display: flex; justify-content: space-around; flex-wrap: wrap;
+            background: rgba(0,0,0,0.8); padding: 15px;
+            border-radius: 50px; border: 1px solid var(--acid);
+            margin-bottom: 30px; font-weight: bold; gap: 10px;
+        }
+
+        #game-container {
+            width: 100%; height: 500px; background: #000;
+            border: 3px solid var(--tox); position: relative;
+            overflow: hidden; cursor: crosshair; border-radius: 15px;
+        }
+        .particle {
+            position: absolute; border-radius: 50%;
+            cursor: pointer; display: flex; align-items: center;
+            justify-content: center; font-size: 12px; font-weight: bold;
+        }
+
+        .wiki-search {
+            width: 100%; padding: 15px; background: #111;
+            border: 1px solid var(--tox); color: white;
+            border-radius: 10px; margin-bottom: 20px; font-size: 1rem;
+        }
+
+        #toast {
+            position: fixed; bottom: 20px; right: 20px;
+            background: var(--tox); color: black; padding: 15px 25px;
+            border-radius: 10px; font-weight: bold; display: none;
+            z-index: 10000; animation: bounceIn 0.5s;
+        }
+        @keyframes bounceIn { from { transform: translateX(100%); opacity:0; } to { transform: translateX(0); opacity:1; } }
+
+    </style>
+</head>
+<body>
+
+    <canvas id="bg"></canvas>
+    <div id="toast">Повідомлення!</div>
+
+    <div id="splash">
+        <div class="logo-box">
+            <h1 style="color: var(--tox); margin:0; letter-spacing: 10px;">NEON LAB</h1>
+            <p style="color: white; opacity: 0.7;">ВЕРСІЯ 10.0 | CAPACITY UPDATE</p>
+            <br>
+            <button style="padding: 15px 40px; cursor:pointer; background:var(--tox); border:none; font-weight:bold; border-radius:5px;" onclick="startGame()">ЗАПУСТИТИ СИСТЕМУ</button>
+        </div>
+    </div>
+
+    <nav id="navbar" style="display: none;">
+        <button id="nav-lab" class="active-nav" onclick="to('lab')">Лабораторія</button>
+        <button id="nav-shop" onclick="to('shop')">Магазин</button>
+        <button id="nav-game" onclick="to('game')">Реактор</button>
+        <button id="nav-wiki" onclick="to('wiki')">База Даних</button>
+    </nav>
+
+    <section id="sec-lab" class="active-sec">
+        <div class="stats-bar">
+            <div>🧪 МОЛЕКУЛИ: <span id="mol-count">0</span></div>
+            <div>📦 ЛІМІТ: <span id="cap-display">1000</span></div>
+            <div>🎓 СТУПІНЬ: <span id="rank">Новачок</span></div>
+        </div>
+
+        <div class="lab-layout">
+            <div class="flask-unit">
+                <h3>КОЛБА СИНТЕЗУ</h3>
+                <div class="flask-visual">
+                    <div id="liquid-fill"></div>
+                </div>
+                <p id="fill-status" style="font-weight: bold;">Заповнено: 0%</p>
+            </div>
+
+            <div style="text-align: center;">
+                <button id="main-btn" class="main-tap-btn" onclick="tap()">СИНТЕЗ</button>
+                <div style="margin-top: 20px;">
+                    <p>Рівень: <span id="lvl-display">1</span> | Досвід: <span id="exp">0</span> / <span id="next-lvl">150</span></p>
+[08.05.2026 21:17] Kolya: <div style="width:100%; height:12px; background:#111; border-radius:6px; border:1px solid #333;">
+                        <div id="exp-fill" style="height:100%; background:var(--tox); width:0%; transition:0.3s; border-radius:6px;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flask-unit">
+                <h3>СТАТИСТИКА</h3>
+                <div style="text-align: left; font-size: 0.9rem; line-height: 1.6;">
+                    <p>● Кліків: <span id="stat-clicks">0</span></p>
+                    <p>● Прибуток: <span id="pps">0</span>/с</p>
+                    <p>● Сила кліку: <span id="stat-pwr">1</span></p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="sec-shop">
+        <h2 style="color:var(--tox);">МАГАЗИН РЕАКТИВІВ ТА ОБЛАДНАННЯ</h2>
+        <div class="card-grid" id="shop-items"></div>
+    </section>
+
+    <section id="sec-game">
+        <div style="display:flex; justify-content: space-between; align-items:center;">
+            <h2>ЯДЕРНИЙ РЕАКТОР</h2>
+            <div style="background:var(--acid); padding:5px 15px; border-radius:5px; font-weight:bold;">БОНУСНИЙ РЕЖИМ</div>
+        </div>
+        <div id="game-container"></div>
+    </section>
+
+    <section id="sec-wiki">
+        <h2>ХІМІЧНА ЕНЦИКЛОПЕДІЯ</h2>
+        <input type="text" class="wiki-search" placeholder="Пошук факту..." oninput="searchWiki(this.value)">
+        <div class="card-grid" id="wiki-content"></div>
+    </section>
+
+    <script>
+        let state = {
+            molecules: 0,
+            totalMolecules: 0,
+            clickPower: 1,
+            autoIncome: 0,
+            capacity: 1000,
+            exp: 0,
+            level: 1,
+            clicks: 0,
+            items: [
+                {name: 'Пробірка', desc: '+1 до кліку', price: 50, val: 1, type: 'pwr'},
+                {name: 'Каталізатор', desc: '+2 молек/с', price: 150, val: 2, type: 'auto'},
+                {name: 'Колба Ерленмейєра', desc: '+500 до вмістимості', price: 300, val: 500, type: 'cap'},
+                {name: 'Велика реторта', desc: '+2000 до вмістимості', price: 1000, val: 2000, type: 'cap'},
+                {name: 'Авто-піпетка', desc: '+10 молек/с', price: 800, val: 10, type: 'auto'},
+                {name: 'Центрифуга', desc: '+50 молек/с', price: 4000, val: 50, type: 'auto'},
+                {name: 'Кріо-сховище', desc: '+10000 до вмістимості', price: 5000, val: 10000, type: 'cap'}
+            ],
+            wiki: [
+                {t: "Гідроген (H)", d: "Найпоширеніший елемент у всесвіті. Сонце на 75% складається з нього."},
+                {t: "Оксиген (O)", d: "Рідкий кисень має блакитний колір і притягується магнітом."},
+                {t: "Золото (Au)", d: "Його можна їсти! Воно біологічно інертне і використовується в елітних десертах."},
+                {t: "Фторантимонова кислота", d: "Найсильніша суперкислота. Роз'їдає скло, тому зберігається в тефлоні."},
+                {t: "Ртуть (Hg)", d: "Якщо кинути залізну гирю в ртуть, вона буде плавати на поверхні як корок."},
+                {t: "Аерогель", d: "На 99.8% складається з повітря. Може витримати вогонь паяльника без нагрівання."},
+                {t: "Осмій (Os)", d: "Найгустіша речовина на Землі. Він удвічі важчий за свинець."},
+                {t: "Астат (At)", d: "Найрідкісніший елемент. У всій земній корі його менше 30 грамів."},
+                {t: "Запах дощу", d: "Цей запах називається петрикор. Його спричиняють органічні сполуки та озон."},
+                {t: "Галій (Ga)", d: "Метал, який плавиться прямо в руках. Його температура плавлення всього 29.7°C."}
+            ]
+        };
+
+        const ranks = ["Новачок", "Асистент", "Лаборант", "Хімік", "Доктор Наук", "Алхімік"];
+
+        function startGame() {
+            document.getElementById('splash').style.opacity = '0';
+            setTimeout(() => {
+                document.getElementById('splash').style.display = 'none';
+                document.getElementById('navbar').style.display = 'flex';
+                loadGame();
+[08.05.2026 21:17] Kolya: renderShop();
+                renderWiki();
+                mainLoop();
+            }, 800);
+        }
+
+        function tap() {
+            if (state.molecules < state.capacity) {
+                state.molecules += state.clickPower;
+                state.totalMolecules += state.clickPower;
+                state.clicks++;
+                state.exp += 3;
+                checkLvl();
+                updateUI();
+                createFloatText(event.clientX, event.clientY, `+${state.clickPower}`);
+            }
+        }
+
+        function checkLvl() {
+            let next = state.level * 150;
+            if(state.exp >= next) {
+                state.exp -= next;
+                state.level++;
+                showToast(`РІВЕНЬ ПІДНЯТО: ${state.level}`);
+            }
+        }
+
+        function buy(idx) {
+            let itm = state.items[idx];
+            if(state.molecules >= itm.price) {
+                state.molecules -= itm.price;
+                if(itm.type === 'pwr') state.clickPower += itm.val;
+                else if(itm.type === 'auto') state.autoIncome += itm.val;
+                else if(itm.type === 'cap') state.capacity += itm.val;
+                itm.price = Math.floor(itm.price * 1.4);
+                renderShop();
+                updateUI();
+                showToast(`Придбано: ${itm.name}`);
+            }
+        }
+
+        function to(id) {
+            document.querySelectorAll('section').forEach(s => s.classList.remove('active-sec'));
+            document.querySelectorAll('nav button').forEach(b => b.classList.remove('active-nav'));
+            document.getElementById('sec-' + id).classList.add('active-sec');
+            document.getElementById('nav-' + id).classList.add('active-nav');
+            if(id === 'game') initGame();
+        }
+
+        function updateUI() {
+            document.getElementById('mol-count').innerText = Math.floor(state.molecules);
+            document.getElementById('cap-display').innerText = state.capacity;
+            document.getElementById('pps').innerText = state.autoIncome;
+            document.getElementById('lvl-display').innerText = state.level;
+            document.getElementById('exp').innerText = state.exp;
+            document.getElementById('next-lvl').innerText = state.level * 150;
+            document.getElementById('exp-fill').style.width = (state.exp / (state.level * 150) * 100) + "%";
+
+            let rankIdx = Math.min(Math.floor(state.totalMolecules / 2000), ranks.length - 1);
+            document.getElementById('rank').innerText = ranks[rankIdx];
+
+            let fill = (state.molecules / state.capacity) * 100;
+            document.getElementById('liquid-fill').style.height = Math.min(fill, 100) + "%";
+            document.getElementById('fill-status').innerText = Заповнено: ${Math.floor(fill)}%;
+
+            const btn = document.getElementById('main-btn');
+            if (state.molecules >= state.capacity) {
+                btn.disabled = true;
+                btn.innerText = "ПОВНО";
+                document.getElementById('fill-status').style.color = "var(--danger)";
+            } else {
+                btn.disabled = false;
+                btn.innerText = "СИНТЕЗ";
+                document.getElementById('fill-status').style.color = "white";
+            }
+
+            document.getElementById('stat-clicks').innerText = state.clicks;
+            document.getElementById('stat-pwr').innerText = state.clickPower;
+        }
+
+        function renderShop() {
+            let h = '';
+            state.items.forEach((itm, i) => {
+                let can = state.molecules >= itm.price;
+                h += `<div class="item-card">
+                    <h3>${itm.name}</h3>
+                    <p>${itm.desc}</p>
+                    <p class="price-tag">${itm.price} молек.</p>
+                    <button class="buy-btn" ${can ? '' : 'disabled'} onclick="buy(${i})">КУПИТИ</button>
+                </div>`;
+            });
+            document.getElementById('shop-items').innerHTML = h;
+        }
+[08.05.2026 21:17] Kolya: function renderWiki(data = state.wiki) {
+            let h = '';
+            data.forEach(f => {
+                h += <div class="item-card"><h3>${f.t}</h3><p>${f.d}</p></div>;
+            });
+            document.getElementById('wiki-content').innerHTML = h;
+        }
+
+        function searchWiki(q) {
+            let res = state.wiki.filter(f => f.t.toLowerCase().includes(q.toLowerCase()) || f.d.toLowerCase().includes(q.toLowerCase()));
+            renderWiki(res);
+        }
+
+        function initGame() {
+            const cont = document.getElementById('game-container');
+            cont.innerHTML = '';
+            spawnP();
+        }
+
+        function spawnP() {
+            if(!document.getElementById('sec-game').classList.contains('active-sec')) return;
+            const cont = document.getElementById('game-container');
+            const p = document.createElement('div');
+            p.className = 'particle';
+            let gold = Math.random() > 0.9;
+            p.style.width = gold ? '50px' : '30px';
+            p.style.height = p.style.width;
+            p.style.background = gold ? '#ffd700' : '#bc13fe';
+            p.style.boxShadow = 0 0 15px ${gold ? '#ffd700' : '#bc13fe'};
+            p.innerText = gold ? 'Au' : 'e-';
+            p.style.left = Math.random() * 90 + '%';
+            p.style.top = Math.random() * 80 + '%';
+            p.onclick = () => {
+                let b = gold ? 1000 : 100;
+                if (state.molecules + b <= state.capacity) {
+                    state.molecules += b;
+                    showToast(`+${b} МОЛЕКУЛ!`);
+                } else {
+                    state.molecules = state.capacity;
+                    showToast("КОЛБА ПОВНА!");
+                }
+                p.remove();
+                updateUI();
+            };
+            cont.appendChild(p);
+            setTimeout(() => { if(p.parentNode) p.remove(); spawnP(); }, 1500);
+        }
+
+        function showToast(m) {
+            const t = document.getElementById('toast');
+            t.innerText = m; t.style.display = 'block';
+            setTimeout(() => t.style.display = 'none', 2000);
+        }
+
+        function createFloatText(x, y, txt) {
+            const d = document.createElement('div');
+            d.innerText = txt; d.style.position = 'fixed';
+            d.style.left = x + 'px'; d.style.top = y + 'px';
+            d.style.color = '#39ff14'; d.style.fontWeight = 'bold';
+            d.style.pointerEvents = 'none';
+            document.body.appendChild(d);
+            d.animate([{top: y+'px', opacity: 1}, {top: (y-100)+'px', opacity: 0}], 1000);
+            setTimeout(() => d.remove(), 1000);
+        }
+
+        function saveGame() { localStorage.setItem('neonChemSave_v10', JSON.stringify(state)); }
+        function loadGame() {
+            let s = localStorage.getItem('neonChemSave_v10');
+            if(s) {
+                let obj = JSON.parse(s);
+                Object.assign(state, obj);
+                updateUI();
+            }
+        }
+
+        function mainLoop() {
+            setInterval(() => {
+                if(state.autoIncome > 0 && state.molecules < state.capacity) {
+                    state.molecules = Math.min(state.molecules + state.autoIncome / 10, state.capacity);
+                    updateUI();
+                }
+            }, 100);
+            setInterval(() => { saveGame(); renderShop(); }, 1000);
+        }
+
+        const cv = document.getElementById('bg');
+        const cx = cv.getContext('2d');
+        cv.width = window.innerWidth; cv.height = window.innerHeight;
+        const pts = Array(60).fill().map(() => ({x: Math.random()*cv.width, y: Math.random()*cv.height, v: Math.random()*0.5+0.2}));
+        function draw() {
+            cx.clearRect(0,0,cv.width,cv.height);
+            cx.fillStyle = "#39ff14";
+            pts.forEach(p => {
+                cx.beginPath(); cx.arc(p.x, p.y, 2, 0, Math.PI*2); cx.fill();
+                p.y -= p.v; if(p.y < 0) p.y = cv.height;
+            });
+            requestAnimationFrame(draw);
+        }
+        draw();
+    </script>
+</body>
+</html>
